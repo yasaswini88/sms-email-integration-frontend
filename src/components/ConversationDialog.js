@@ -3,8 +3,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
+  
   Typography,
   Box,
   Paper,
@@ -12,7 +11,7 @@ import {
   IconButton,
   useTheme,
   alpha,
-  Divider
+  
 } from '@mui/material';
 import { Close as CloseIcon, Email as EmailIcon, Sms as SmsIcon } from '@mui/icons-material';
 import axios from 'axios';
@@ -43,14 +42,14 @@ function ConversationDialog({ open, onClose, threadId }) {
     }
   };
 
-  function formatDate(dateString) {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      month: 'short', day: 'numeric',
-      hour: 'numeric', minute: '2-digit', hour12: true
-    });
-  }
+  // function formatDate(dateString) {
+  //   if (!dateString) return '';
+  //   const date = new Date(dateString);
+  //   return date.toLocaleString('en-US', {
+  //     month: 'short', day: 'numeric',
+  //     hour: 'numeric', minute: '2-digit', hour12: true
+  //   });
+  // }
 
   const MessageBubble = ({ message }) => {
     const isSMS = !(message.channel === 'SMS');

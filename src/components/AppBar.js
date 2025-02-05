@@ -46,7 +46,7 @@ function AppBar() {
             fontWeight: 600
           }}
         >
-          Dashboard
+          Map SMS-Email Integrator
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
