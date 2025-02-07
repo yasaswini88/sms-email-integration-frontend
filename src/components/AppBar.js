@@ -12,11 +12,19 @@ import {
 import {
   Menu as MenuIcon,
   Notifications as NotificationsIcon,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Logout as LogoutIcon
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
 function AppBar() {
   const theme = useTheme();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Navigate back to login page
+    navigate('/');
+  };
 
   return (
     <MuiAppBar 
@@ -30,7 +38,7 @@ function AppBar() {
       <Toolbar>
         <IconButton
           edge="start"
-          color="inherit" // Changed to inherit to make it white
+          color="inherit"
           aria-label="menu"
           sx={{ mr: 2 }}
         >
@@ -42,7 +50,7 @@ function AppBar() {
           component="div" 
           sx={{ 
             flexGrow: 1,
-            color: 'inherit', // Changed to inherit to make it white
+            color: 'inherit',
             fontWeight: 600
           }}
         >
@@ -50,12 +58,16 @@ function AppBar() {
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <IconButton color="inherit"> {/* Changed to inherit */}
+          <IconButton color="inherit">
             <NotificationsIcon />
           </IconButton>
           
-          <IconButton color="inherit"> {/* Changed to inherit */}
+          <IconButton color="inherit">
             <SettingsIcon />
+          </IconButton>
+
+          <IconButton color="inherit" onClick={handleLogout}>
+            <LogoutIcon />
           </IconButton>
 
           <Avatar 
@@ -63,7 +75,7 @@ function AppBar() {
               width: 35, 
               height: 35,
               bgcolor: alpha('#fff', 0.2), // Changed background color
-              color: 'inherit' // Changed to inherit
+              color: 'inherit'
             }}
           >
             A

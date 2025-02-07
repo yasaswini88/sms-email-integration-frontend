@@ -28,11 +28,15 @@ import { useLocation } from 'react-router-dom';
 export default function Dashboard() {
   const theme = useTheme();
 
+
   const { state } = useLocation();
-  const phoneNumber = state?.phoneNumber || null;
+  const role = state?.role || null;          // 'ADMIN', 'CLIENT', or possibly 'FIRM'
+  const inputValue = state?.inputValue || '';
 
   // State management
   const [customers, setCustomers] = useState([]);
+
+  let filteredCustomers = [...customers];
   const [lawyers, setLawyers] = useState([]);
   const [open, setOpen] = useState(false);
   const [newCustomer, setNewCustomer] = useState({
@@ -52,6 +56,9 @@ export default function Dashboard() {
 
   const [firmLawyersDialogOpen, setFirmLawyersDialogOpen] = useState(false);
   const [selectedFirmLawyers, setSelectedFirmLawyers] = useState([]);
+
+
+  const [selectedThread, setSelectedThread] = useState(null);
 
 
 
@@ -140,6 +147,24 @@ export default function Dashboard() {
       }
     }
     return Array.from(map.values());
+  }
+
+  let threads = getThreadsWithLatest();
+
+  if (role === 'FIRM' && inputValue) {
+    filteredCustomers = customers.filter(c => c.custMail === inputValue);
+  }
+
+  if (role === 'CLIENT' && inputValue) {
+    threads = threads.filter(thread =>
+      thread.threadId && thread.threadId.includes(inputValue)
+    );
+  }
+
+  if (role === 'FIRM' && filteredCustomers.length > 0) {
+    const firmTwilio = filteredCustomers[0].twilioNumber; // e.g. "+17579608924"
+    // Filter threads by comparing "toNumber" to the firm’s Twilio
+    threads = threads.filter(thread => thread.toNumber === firmTwilio);
   }
 
   // function formatDate(dateString) {
@@ -233,6 +258,7 @@ export default function Dashboard() {
   const handleCloseEditDialog = () => {
     setEditDialogOpen(false);
   };
+  
 
   const handleEditFieldChange = (e) => {
     const { name, value } = e.target;
@@ -299,9 +325,12 @@ export default function Dashboard() {
     }
   };
 
-  const handleAssign = async (lawyerId, conversationId) => {
+  const handleAssign = async (lawyerId, threadId) => {
+    console.log('Assignee:', assignee);
+  console.log('Selected Conversation:', selectedConversation);
     try {
-      await axios.put(`http://23.23.199.217:8080/api/customers/assign/${lawyerId}/${conversationId}`);
+      // await axios.put(`http://23.23.199.217:8080/api/customers/assign/${lawyerId}/${conversationId}`);
+      await axios.put(`http://23.23.199.217:8080/api/customers/assign/thread/${lawyerId}/${threadId}`);
       setAssignDialogOpen(false);
       fetchConversations();
     } catch (error) {
@@ -323,7 +352,7 @@ export default function Dashboard() {
   };
 
 
-  const threads = getThreadsWithLatest();
+  // const threads = getThreadsWithLatest();
 
 
   // const allThreads = getThreadsWithLatest();
@@ -341,90 +370,94 @@ export default function Dashboard() {
 
       {/* Customers Section */}
 
-      <Box sx={{ mb: 6 }}>
-        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <PersonIcon color="primary" />
-            <Typography variant="h5" sx={{ fontWeight: 600 }}>
-              Law Firms
-            </Typography>
-            <Chip
-              label={customers.length}
-              size="small"
-              sx={{ ml: 1, bgcolor: alpha(theme.palette.primary.main, 0.1) }}
-            />
-          </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleOpenDialog}
-            sx={{ borderRadius: 2 }}
-          >
-            Add Firm
-          </Button>
-        </Box>
+      {(role !== 'CLIENT') && (
 
-        <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
-                  {/* <TableCell sx={{ fontWeight: 600 }}>ID</TableCell> */}
-                  <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Twilio Number</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {customers.map((customer) => (
-                  <TableRow key={customer.custiId} hover>
-                    {/* <TableCell>{customer.custiId}</TableCell> */}
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {customer.custMail}
-                      </Box>
-                    </TableCell>
-                    <TableCell>{customer.custName}</TableCell>
-                    <TableCell>{customer.twilioNumber}</TableCell>
-                    <TableCell>
-                      <IconButton
-                        color="primary"
-                        onClick={() => handleEditClick(customer)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      {/* <IconButton
+        <Box sx={{ mb: 6 }}>
+          <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <PersonIcon color="primary" />
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                Law Firms
+              </Typography>
+              <Chip
+                label={customers.length}
+                size="small"
+                sx={{ ml: 1, bgcolor: alpha(theme.palette.primary.main, 0.1) }}
+              />
+            </Box>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenDialog}
+              sx={{ borderRadius: 2 }}
+            >
+              Add Firm
+            </Button>
+          </Box>
+
+          <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
+                    {/* <TableCell sx={{ fontWeight: 600 }}>ID</TableCell> */}
+                    <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Twilio Number</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredCustomers.map((customer) => (
+                    <TableRow key={customer.custiId} hover>
+                      {/* <TableCell>{customer.custiId}</TableCell> */}
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {customer.custMail}
+                        </Box>
+                      </TableCell>
+                      <TableCell>{customer.custName}</TableCell>
+                      <TableCell>{customer.twilioNumber}</TableCell>
+                      <TableCell>
+                        <IconButton
+                          color="primary"
+                          onClick={() => handleEditClick(customer)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        {/* <IconButton
                         color="error"
                         onClick={() => handleDeleteClick(customer)}
                       >
                         <DeleteIcon />
                       </IconButton> */}
 
-                      <IconButton
-                        color="success"
-                        title="Add Lawyer"
-                        onClick={() => handleAddLawyerClick(customer)}
-                      >
-                        <PersonAddIcon />
-                      </IconButton>
+                        <IconButton
+                          color="success"
+                          title="Add Lawyer"
+                          onClick={() => handleAddLawyerClick(customer)}
+                        >
+                          <PersonAddIcon />
+                        </IconButton>
 
 
-                      <IconButton
-                        color="info"
-                        onClick={() => handleViewLawyers(customer)}
-                        title="View Lawyers"
-                      >
-                        <VisibilityIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-      </Box>
+                        <IconButton
+                          color="info"
+                          onClick={() => handleViewLawyers(customer)}
+                          title="View Lawyers"
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        </Box>
+
+      )}
 
       {/* Conversations Section */}
       <Box sx={{ mb: 4 }}>
@@ -454,9 +487,13 @@ export default function Dashboard() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {threads.map((thread) => (
+                {threads.map((thread) => {
+                  console.log('Thread ID:', thread.threadId);
+                  return (
                   <TableRow
-                    key={thread.id}
+                    key={thread.
+                      threadId
+                      }
                     hover
                     sx={{
                       cursor: 'pointer',
@@ -481,21 +518,33 @@ export default function Dashboard() {
                     </TableCell>
                     <TableCell>{moment.utc(thread.timestamp).local().format("MMM-DD-YYYY hh:MM:SS A")}</TableCell>
                     <TableCell>
-                      <Button title='View' onClick={() => handleOpenThread(thread.threadId)}>View</Button>
-                      <Button onClick={() => {
-                        setSelectedConversation(thread.id)
-                        setAssignDialogOpen(true)
-                      }} title='Assign'
-                        disabled={thread.firmLawyer !== null}
-                      >Reassign Client</Button>
+                      <Button title='View' onClick={() => handleOpenThread(thread.threadId)}>
+                        View
+                      </Button>
+                      {role !== 'CLIENT' && (
+                        <Button
+                          onClick={() => {
+                            setSelectedThread(thread.conversationThreadId);
+                            setAssignDialogOpen(true);
+                          }}
+                          title='Assign'
+                          // disabled={thread.firmLawyer !== null && thread.firmLawyer !== undefined}
+                          disabled={Boolean(thread.assignedLawyerId)}
 
+                        >
+                          Reassign Client
+                        </Button>
+                      )}
                     </TableCell>
+
 
                     <TableCell>
-                      {thread.firmLawyer ? thread.firmLawyer.lawyerName : 'Not Assigned'}
+                      {/* {thread.firmLawyer ? thread.firmLawyer.lawyerName : 'Not Assigned'} */}
+                      {thread.assignedLawyerName ? thread.assignedLawyerName : 'Not Assigned'}
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+})}
               </TableBody>
             </Table>
           </TableContainer>
@@ -529,7 +578,8 @@ export default function Dashboard() {
               </MenuItem>
             ))}
           </Select>
-          <Button onClick={() => handleAssign(assignee, selectedConversation)}>Assign</Button>
+          
+          <Button onClick={() => handleAssign(assignee, selectedThread)}>Assign</Button>
           {/* <Autocomplete
             title='Assignee'
             options={lawyers}
