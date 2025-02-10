@@ -13,17 +13,18 @@ const CaseTypeMetric = ({ firmId }) => {
     },
     plotOptions: {
       treemap: {
+        distributed: true,
         colorScale: {
           ranges: [
             {
               from: -6,
               to: 0,
-              color: '#CD363A'
+              color: '#fb8500'
             },
             {
               from: 0.001,
               to: 6,
-              color: '#52B12C'
+              color: '#65B12C'
             }
           ]
         }

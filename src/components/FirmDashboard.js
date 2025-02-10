@@ -28,6 +28,7 @@ import moment from "moment";
 import ConversationDialog from "./ConversationDialog";
 import FirmDashboardMetrics from './FirmDashboardMetrics';
 
+import Papa from 'papaparse';
 export default function FirmDashboard() {
     const { state } = useLocation();
     const { firmId, role, inputValue } = state || {};
@@ -65,9 +66,8 @@ export default function FirmDashboard() {
             setLawyers(lawyerResp.data);
 
             // Fetch all conversations
-            const convResp = await axios.get(
-                "http://23.23.199.217:8080/api/conversations"
-            );
+            // Fetch all conversations
+            const convResp = await axios.get("http://23.23.199.217:8080/api/conversations");
             const allConversations = convResp.data;
 
             // Filter for this firm's lawyers
@@ -76,21 +76,25 @@ export default function FirmDashboard() {
                 firmLawyerEmails.includes(convo.email)
             );
 
-            // Group messages by threadId
-            const grouped = filtered.reduce((acc, convo) => {
-                if (!acc[convo.threadId]) acc[convo.threadId] = [];
-                acc[convo.threadId].push(convo);
+            // NEW: Filter out any conversations whose thread status is "INACTIVE"
+            const activeOnly = filtered.filter((convo) => convo.status === "ACTIVE");
+
+            // Group messages by conversationThreadId
+            const grouped = activeOnly.reduce((acc, convo) => {
+                if (!acc[convo.conversationThreadId]) acc[convo.conversationThreadId] = [];
+                acc[convo.conversationThreadId].push(convo);
                 return acc;
             }, {});
             setGroupedConversations(grouped);
 
-            // Store latest conversation per thread
+            // Store the latest conversation per thread
             const latestConversations = Object.values(grouped).map((msgs) =>
                 msgs.reduce((latest, msg) =>
                     new Date(latest.timestamp) > new Date(msg.timestamp) ? latest : msg
                 )
             );
             setConversations(latestConversations);
+
         } catch (error) {
             console.error("Error loading firm data:", error);
         }
@@ -135,10 +139,22 @@ export default function FirmDashboard() {
         }
     };
 
+    const handleResolveClick = async (threadId) => {
+        try {
+            // Make a PUT request to your new backend endpoint
+            await axios.put(`http://23.23.199.217:8080/api/conversations/thread/${threadId}/resolve`);
+
+            loadData();
+        } catch (error) {
+            console.error("Error marking thread resolved:", error);
+        }
+    };
+
+
     return (
         <Container maxWidth="xl" sx={{ py: 2 }}>
-  
-         <FirmDashboardMetrics firmId={firmId} />
+
+            <FirmDashboardMetrics firmId={firmId} />
 
             {/* Lawyers Section */}
             <Box sx={{ mb: 6 }}>
@@ -197,6 +213,7 @@ export default function FirmDashboard() {
                                     <TableCell sx={{ fontWeight: 600 }}>Latest Message</TableCell>
                                     <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
                                     <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Assigned To</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -212,7 +229,7 @@ export default function FirmDashboard() {
                                         </TableCell>
                                         <TableCell>
                                             <Button
-                                                variant="contained"
+                                                variant="outlined"
                                                 size="small"
                                                 onClick={() => handleViewThread(convo.threadId)}
                                             >
@@ -227,8 +244,34 @@ export default function FirmDashboard() {
                                             >
                                                 Assign
                                             </Button>
-                                        </TableCell>
 
+                                            <Button
+                                                variant="outlined"
+                                                color="error"
+                                                size="small"
+                                                sx={{
+                                                    ml: 1,
+                                                    borderRadius: 2,
+                                                    textTransform: 'none',
+                                                    fontWeight: 600,
+                                                    padding: '4px 12px',
+                                                    '&:hover': {
+                                                        backgroundColor: (theme) => alpha(theme.palette.error.main, 0.1),
+                                                        transform: 'scale(1.02)',
+                                                        transition: 'transform 0.2s ease-in-out'
+                                                    },
+                                                    '&:active': {
+                                                        transform: 'scale(0.98)'
+                                                    }
+                                                }}
+                                                onClick={() => handleResolveClick(convo.conversationThreadId)}
+                                            >
+                                                Resolve
+                                            </Button>
+                                        </TableCell>
+                                        <TableCell>
+                                            {convo.assignedLawyerName ? convo.assignedLawyerName : 'Not Assigned'}
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -273,7 +316,7 @@ export default function FirmDashboard() {
                 </DialogActions>
             </Dialog>
 
-            
+
 
             {/* Thread Dialog */}
             <ConversationDialog

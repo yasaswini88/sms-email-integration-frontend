@@ -258,7 +258,7 @@ export default function Dashboard() {
   const handleCloseEditDialog = () => {
     setEditDialogOpen(false);
   };
-  
+
 
   const handleEditFieldChange = (e) => {
     const { name, value } = e.target;
@@ -327,7 +327,7 @@ export default function Dashboard() {
 
   const handleAssign = async (lawyerId, threadId) => {
     console.log('Assignee:', assignee);
-  console.log('Selected Conversation:', selectedConversation);
+    console.log('Selected Conversation:', selectedConversation);
     try {
       // await axios.put(`http://23.23.199.217:8080/api/customers/assign/${lawyerId}/${conversationId}`);
       await axios.put(`http://23.23.199.217:8080/api/customers/assign/thread/${lawyerId}/${threadId}`);
@@ -348,6 +348,18 @@ export default function Dashboard() {
       setFirmLawyersDialogOpen(true);          // open the dialog
     } catch (error) {
       console.error('Error fetching lawyers:', error);
+    }
+  };
+
+
+  const handleResolveClick = async (threadId) => {
+    try {
+      // Make a PUT request to your new backend endpoint
+      await axios.put(`http://23.23.199.217:8080/api/conversations/thread/${threadId}/resolve`);
+
+      fetchConversations();
+    } catch (error) {
+      console.error("Error marking thread resolved:", error);
     }
   };
 
@@ -490,22 +502,22 @@ export default function Dashboard() {
                 {threads.map((thread) => {
                   console.log('Thread ID:', thread.threadId);
                   return (
-                  <TableRow
-                    key={thread.
-                      threadId
+                    <TableRow
+                      key={thread.
+                        threadId
                       }
-                    hover
-                    sx={{
-                      cursor: 'pointer',
-                      '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.05) }
-                    }}
-                  >
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {thread.threadId}
-                      </Box>
-                    </TableCell>
-                    {/* <TableCell>
+                      hover
+                      sx={{
+                        cursor: 'pointer',
+                        '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.05) }
+                      }}
+                    >
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {thread.threadId}
+                        </Box>
+                      </TableCell>
+                      {/* <TableCell>
                       <Chip 
                         label={thread.channel}
                         size="small"
@@ -513,38 +525,65 @@ export default function Dashboard() {
                         sx={{ borderRadius: 1 }}
                       />
                     </TableCell> */}
-                    <TableCell sx={{ maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {thread.message}
-                    </TableCell>
-                    <TableCell>{moment.utc(thread.timestamp).local().format("MMM-DD-YYYY hh:MM:SS A")}</TableCell>
-                    <TableCell>
-                      <Button title='View' onClick={() => handleOpenThread(thread.threadId)}>
-                        View
-                      </Button>
-                      {role !== 'CLIENT' && (
-                        <Button
-                          onClick={() => {
-                            setSelectedThread(thread.conversationThreadId);
-                            setAssignDialogOpen(true);
-                          }}
-                          title='Assign'
-                          // disabled={thread.firmLawyer !== null && thread.firmLawyer !== undefined}
-                          disabled={Boolean(thread.assignedLawyerId)}
-
-                        >
-                          Reassign Client
+                      <TableCell sx={{ maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {thread.message}
+                      </TableCell>
+                      <TableCell>{moment.utc(thread.timestamp).local().format("MMM-DD-YYYY hh:MM:SS A")}</TableCell>
+                      <TableCell>
+                        <Button 
+                        // variant='outlined'
+                        title='View' onClick={() => handleOpenThread(thread.threadId)}>
+                          View
                         </Button>
-                      )}
-                    </TableCell>
+                        {role !== 'CLIENT' && (
+                          <Button
+                          // variant="outlined"
+                            onClick={() => {
+                              setSelectedThread(thread.conversationThreadId);
+                              setAssignDialogOpen(true);
+                            }}
+                            title='Assign'
+                            // disabled={thread.firmLawyer !== null && thread.firmLawyer !== undefined}
+                            disabled={Boolean(thread.assignedLawyerId)}
+
+                          >
+                            Reassign Client
+                          </Button>
+
+                        )}
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          size="small"
+                          sx={{
+                            ml: 1,
+                            borderRadius: 2,
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            padding: '4px 12px',
+                            '&:hover': {
+                              backgroundColor: (theme) => alpha(theme.palette.error.main, 0.1),
+                              transform: 'scale(1.02)',
+                              transition: 'transform 0.2s ease-in-out'
+                            },
+                            '&:active': {
+                              transform: 'scale(0.98)'
+                            }
+                          }}
+                          onClick={() => handleResolveClick(thread.conversationThreadId)}
+                        >
+                          Resolve
+                        </Button>
+                      </TableCell>
 
 
-                    <TableCell>
-                      {/* {thread.firmLawyer ? thread.firmLawyer.lawyerName : 'Not Assigned'} */}
-                      {thread.assignedLawyerName ? thread.assignedLawyerName : 'Not Assigned'}
-                    </TableCell>
-                  </TableRow>
+                      <TableCell>
+                        {/* {thread.firmLawyer ? thread.firmLawyer.lawyerName : 'Not Assigned'} */}
+                        {thread.assignedLawyerName ? thread.assignedLawyerName : 'Not Assigned'}
+                      </TableCell>
+                    </TableRow>
                   );
-})}
+                })}
               </TableBody>
             </Table>
           </TableContainer>
@@ -578,7 +617,7 @@ export default function Dashboard() {
               </MenuItem>
             ))}
           </Select>
-          
+
           <Button onClick={() => handleAssign(assignee, selectedThread)}>Assign</Button>
           {/* <Autocomplete
             title='Assignee'
