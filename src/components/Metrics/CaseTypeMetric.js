@@ -3,79 +3,79 @@ import React, { useEffect, useState } from 'react';
 import Chart from 'react-apexcharts';
 
 const CaseTypeMetric = ({ firmId }) => {
-
   const [options, setOptions] = useState({
     chart: {
-      type: 'treemap'
+      type: 'treemap',
     },
     title: {
-      text: 'Case Type Metrics'
+      text: 'Case Type Metrics',
+      align: 'center',
     },
     plotOptions: {
       treemap: {
         distributed: true,
+        enableShades: false,
         colorScale: {
           ranges: [
             {
-              from: -6,
-              to: 0,
-              color: '#fb8500'
+              from: 1,
+              to: 5,
+              color: '#ff7f0e', // Orange for lower counts
             },
             {
-              from: 0.001,
-              to: 6,
-              color: '#65B12C'
-            }
-          ]
-        }
-      }
-    }
+              from: 6,
+              to: 15,
+              color: '#2ca02c', // Green for moderate counts
+            },
+            {
+              from: 16,
+              to: 50,
+              color: '#1f77b4', // Blue for high counts
+            },
+          ],
+        },
+      },
+    },
   });
 
-  const [series, setSeries] = useState([
-    {
-      data: [
-        { x: 'Criminal Defense', y: 10 },
-        { x: 'Personal Injury', y: 4 },
-        { x: 'Family Law', y: 22 },
-        { x: 'Wills and Trusts', y: 11 },
-        { x: 'Real Estate', y: 9 },
-        { x: 'Bankruptcy', y: 3 },
-        { x: 'Civil Litigation', y: 7 }
-      ]
-    }
-  ]);
+  const [series, setSeries] = useState([{ data: [] }]);
 
   useEffect(() => {
-    loadMetricsData();
+    if (firmId) {
+      loadMetricsData();
+    }
   }, [firmId]);
 
   const loadMetricsData = async () => {
     try {
-      var response = await axios.get(
-        `http://23.23.199.217:8080/api/metrics/customer/caseType/1`
+      const response = await axios.get(
+        `http://23.23.199.217:8080/api/metrics/customer/caseType/${firmId}`
       );
-      console.log(response.data);
-      var caseTypes = []
-      response.data.forEach(element => {
-        caseTypes.push({ x: element.caseType, y: element.count });
-      });
+
+      const caseTypes = response.data.map((element) => ({
+        x: element.caseType,
+        y: element.count,
+      }));
+
       setSeries([{ data: caseTypes }]);
     } catch (error) {
-      console.error("Error assigning conversation:", error);
+      console.error("Error fetching case type metrics:", error);
     }
   };
 
   return (
     <div>
-      <Chart
-        options={options}
-        series={series}
-        type="treemap"
-        height="350"
-      />
+      {series[0].data.length > 0 ? (
+        <Chart options={options} series={series} type="treemap" height="350" />
+      ) : (
+        <p style={{ textAlign: 'center', color: '#777', marginTop: '20px' }}>
+          No data available
+        </p>
+      )}
     </div>
   );
 };
 
 export default CaseTypeMetric;
+
+

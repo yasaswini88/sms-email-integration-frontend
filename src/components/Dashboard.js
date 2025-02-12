@@ -29,9 +29,13 @@ export default function Dashboard() {
   const theme = useTheme();
 
 
-  const { state } = useLocation();
-  const role = state?.role || null;          // 'ADMIN', 'CLIENT', or possibly 'FIRM'
-  const inputValue = state?.inputValue || '';
+
+
+  const role = localStorage.getItem("role");
+  const email = localStorage.getItem("email");
+
+  const inputValue = localStorage.getItem("email") || "";
+
 
   // State management
   const [customers, setCustomers] = useState([]);
@@ -44,6 +48,7 @@ export default function Dashboard() {
     custName: '',
     twilioNumber: '',
   });
+
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [threadDialogOpen, setThreadDialogOpen] = useState(false);
@@ -388,14 +393,18 @@ export default function Dashboard() {
           <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <PersonIcon color="primary" />
-              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+              <Typography variant="h5" sx={{
+                fontWeight: 600,
+                color: '#1976d2', // Material-UI primary blue
+                textShadow: '1px 1px 1px rgba(0,0,0,0.1)'
+              }}>
                 Law Firms
               </Typography>
-              <Chip
+              {/* <Chip
                 label={customers.length}
                 size="small"
                 sx={{ ml: 1, bgcolor: alpha(theme.palette.primary.main, 0.1) }}
-              />
+              /> */}
             </Box>
             <Button
               variant="contained"
@@ -475,7 +484,10 @@ export default function Dashboard() {
       <Box sx={{ mb: 4 }}>
         <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
           <MessageIcon color="primary" />
-          <Typography variant="h5" sx={{ fontWeight: 600 }}>
+          <Typography variant="h5" sx={{
+            fontWeight: 600, color: '#1976d2', // Material-UI primary blue
+            textShadow: '1px 1px 1px rgba(0,0,0,0.1)'
+          }}>
             Conversations
           </Typography>
           <Chip
@@ -490,100 +502,53 @@ export default function Dashboard() {
             <Table>
               <TableHead>
                 <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
-                  <TableCell sx={{ fontWeight: 600 }}>Thread ID</TableCell>
-                  {/* <TableCell sx={{ fontWeight: 600 }}>Channel</TableCell> */}
-                  <TableCell sx={{ fontWeight: 600 }}>Latest Message</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-                  <TableCell></TableCell>
-                  <TableCell>Assigned To </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Client Phone Number</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Case Type</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Assigned Lawyer Name</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Assigned Lawyer Email</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {threads.map((thread) => {
-                  console.log('Thread ID:', thread.threadId);
-                  return (
-                    <TableRow
-                      key={thread.
-                        threadId
-                      }
-                      hover
-                      sx={{
-                        cursor: 'pointer',
-                        '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.05) }
-                      }}
-                    >
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {thread.threadId}
-                        </Box>
-                      </TableCell>
-                      {/* <TableCell>
-                      <Chip 
-                        label={thread.channel}
-                        size="small"
-                        color={thread.channel.toLowerCase() === 'sms' ? 'primary' : 'secondary'}
-                        sx={{ borderRadius: 1 }}
-                      />
-                    </TableCell> */}
-                      <TableCell sx={{ maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {thread.message}
-                      </TableCell>
-                      <TableCell>{moment.utc(thread.timestamp).local().format("MMM-DD-YYYY hh:MM:SS A")}</TableCell>
-                      <TableCell>
-                        <Button 
-                        // variant='outlined'
-                        title='View' onClick={() => handleOpenThread(thread.threadId)}>
-                          View
-                        </Button>
-                        {role !== 'CLIENT' && (
-                          <Button
-                          // variant="outlined"
-                            onClick={() => {
-                              setSelectedThread(thread.conversationThreadId);
-                              setAssignDialogOpen(true);
-                            }}
-                            title='Assign'
-                            // disabled={thread.firmLawyer !== null && thread.firmLawyer !== undefined}
-                            disabled={Boolean(thread.assignedLawyerId)}
-
-                          >
-                            Reassign Client
-                          </Button>
-
-                        )}
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          size="small"
-                          sx={{
-                            ml: 1,
-                            borderRadius: 2,
-                            textTransform: 'none',
-                            fontWeight: 600,
-                            padding: '4px 12px',
-                            '&:hover': {
-                              backgroundColor: (theme) => alpha(theme.palette.error.main, 0.1),
-                              transform: 'scale(1.02)',
-                              transition: 'transform 0.2s ease-in-out'
-                            },
-                            '&:active': {
-                              transform: 'scale(0.98)'
-                            }
-                          }}
-                          onClick={() => handleResolveClick(thread.conversationThreadId)}
-                        >
-                          Resolve
-                        </Button>
-                      </TableCell>
-
-
-                      <TableCell>
-                        {/* {thread.firmLawyer ? thread.firmLawyer.lawyerName : 'Not Assigned'} */}
-                        {thread.assignedLawyerName ? thread.assignedLawyerName : 'Not Assigned'}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {threads.map((thread) => (
+                  <TableRow
+                    key={thread.threadId}
+                    hover
+                    sx={{
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.05) }
+                    }}
+                  >
+                    <TableCell>{thread.phoneNumber}</TableCell>
+                    <TableCell>{thread.caseType}</TableCell>
+                    <TableCell>{thread.assignedLawyerName ?? 'Not Assigned'}</TableCell>
+                    <TableCell>{thread.email ?? 'N/A'}</TableCell>
+                    <TableCell>{thread.status}</TableCell>
+                    <TableCell>
+                      {/* your "View" / "Assign" / "Resolve" buttons here */}
+                      <Button onClick={() => handleOpenThread(thread.threadId)}>
+                        View
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setSelectedThread(thread.conversationThreadId);
+                          setAssignDialogOpen(true);
+                        }}
+                        disabled={Boolean(thread.assignedLawyerId)}
+                      >
+                        Assign
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={() => handleResolveClick(thread.conversationThreadId)}
+                      >
+                        Resolve
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </TableContainer>

@@ -20,15 +20,20 @@ import { useNavigate } from 'react-router-dom';
 function AppBar() {
   const theme = useTheme();
   const navigate = useNavigate();
-
   const handleLogout = () => {
-    // Navigate back to login page
-    navigate('/');
+    // 1) Remove from localStorage
+    localStorage.removeItem("email");
+    localStorage.removeItem("role");
+    localStorage.removeItem("firmId");
+    localStorage.removeItem("lawyerId");
+
+    // 2) Navigate back to login
+    navigate("/");
   };
 
   return (
-    <MuiAppBar 
-      position="fixed" 
+    <MuiAppBar
+      position="fixed"
       sx={{
         zIndex: theme.zIndex.drawer + 1,
         backgroundColor: theme.palette.primary.main, // Changed to primary color
@@ -45,10 +50,10 @@ function AppBar() {
           <MenuIcon />
         </IconButton>
 
-        <Typography 
-          variant="h6" 
-          component="div" 
-          sx={{ 
+        <Typography
+          variant="h6"
+          component="div"
+          sx={{
             flexGrow: 1,
             color: 'inherit',
             fontWeight: 600
@@ -61,7 +66,7 @@ function AppBar() {
           <IconButton color="inherit">
             <NotificationsIcon />
           </IconButton>
-          
+
           <IconButton color="inherit">
             <SettingsIcon />
           </IconButton>
@@ -70,9 +75,9 @@ function AppBar() {
             <LogoutIcon />
           </IconButton>
 
-          <Avatar 
-            sx={{ 
-              width: 35, 
+          <Avatar
+            sx={{
+              width: 35,
               height: 35,
               bgcolor: alpha('#fff', 0.2), // Changed background color
               color: 'inherit'
