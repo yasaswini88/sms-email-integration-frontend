@@ -8,7 +8,8 @@ import {
   TextField, Paper, Box, Chip, IconButton,
   useTheme, alpha, Snackbar, Alert,
   Select,
-  MenuItem
+  MenuItem,
+  Icon
 } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
 import {
@@ -24,12 +25,10 @@ import {
 import ConversationDialog from './ConversationDialog';
 import moment from 'moment';
 import { useLocation } from 'react-router-dom';
+import Papa from 'papaparse';
 
 export default function Dashboard() {
   const theme = useTheme();
-
-
-
 
   const role = localStorage.getItem("role");
   const email = localStorage.getItem("email");
@@ -132,6 +131,34 @@ export default function Dashboard() {
       console.error('Error fetching conversations:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const importCsv = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const csvText = e.target.result;
+        const parsedResult = Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+        });
+        console.log("Parsed CSV Data:", parsedResult.data);
+
+        const custiId = 1;
+
+        // POST the parsed data to your backend
+        axios.post(`http://23.23.199.217:8080/api/firm-lawyers/bulk-insert?custiId=${custiId}`, parsedResult.data)
+          .then(response => {
+            console.log("Response from POST:", response.data)
+            fetchConversations();
+          })
+          .catch(error => {
+            console.error("Error importing CSV:", error);
+          });
+      };
+      reader.readAsText(file);
     }
   };
 
@@ -460,6 +487,7 @@ export default function Dashboard() {
                         >
                           <PersonAddIcon />
                         </IconButton>
+                        
 
 
                         <IconButton
@@ -469,6 +497,8 @@ export default function Dashboard() {
                         >
                           <VisibilityIcon />
                         </IconButton>
+
+                        <input type="file" onChange={importCsv} />
                       </TableCell>
                     </TableRow>
                   ))}
