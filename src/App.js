@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import AppBar from './components/AppBar';
 import Login from './components/Login';
 import FirmDashboard from "./components/FirmDashboard";
+import Dashboardv2 from './components/Dashboardv2';
 import VerifyCode from './components/VerifyCode';
 import { Box, Toolbar } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -35,7 +36,7 @@ function Layout() {
         <Box component="main" sx={{ flexGrow: 1 }}>
           {!isLoginPage && !isVerifyCodePage && <Toolbar />}
           <Routes>
-            +  <Route
+             <Route
               path="/dashboard"
               element={
                 <PrivateRoute>
@@ -50,8 +51,17 @@ function Layout() {
                 </PrivateRoute>
               }
             />
+            <Route
+              path="/dashboardv2"
+              element={
+                <PrivateRoute>
+                  <Dashboardv2 />
+                </PrivateRoute>
+              }
+            />
             <Route path="/verifyCode" element={<VerifyCode />} />
             <Route path="/" element={<Login />} />
+
           </Routes>
         </Box>
       </div>

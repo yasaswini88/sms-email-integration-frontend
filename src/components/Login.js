@@ -22,6 +22,7 @@ export default function Login() {
   const [error, setError] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
   const navigate = useNavigate();
   const theme = useTheme();
 
@@ -48,7 +49,7 @@ export default function Login() {
       localStorage.setItem("role", role);
       localStorage.removeItem("firmId"); 
 
-      navigate("/dashboard", {
+      navigate("/dashboardv2", {
         state: { inputValue: trimmedEmail, role },
       });
       return;

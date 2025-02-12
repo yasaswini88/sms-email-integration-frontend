@@ -27,13 +27,14 @@ import moment from 'moment';
 import { useLocation } from 'react-router-dom';
 import Papa from 'papaparse';
 
-export default function Dashboard() {
+export default function Dashboardv2() {
   const theme = useTheme();
 
   const role = localStorage.getItem("role");
   const email = localStorage.getItem("email");
 
   const inputValue = localStorage.getItem("email") || "";
+  const [selectedFile, setSelectedFile] = useState(null);
 
 
   // State management
@@ -57,7 +58,7 @@ export default function Dashboard() {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  
+
 
 
   const [firmLawyersDialogOpen, setFirmLawyersDialogOpen] = useState(false);
@@ -136,7 +137,7 @@ export default function Dashboard() {
     }
   };
 
-  const importCsv = (event) => {
+  const importCsv = (event, selectedCustiId) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -146,26 +147,23 @@ export default function Dashboard() {
           header: true,
           skipEmptyLines: true,
         });
-  
+
         console.log("Parsed CSV Data:", parsedResult.data);
-  
-        const custiId = 1;
-  
-        // POST the parsed data to your backend
-        axios.post(`http://23.23.199.217:8080/api/firm-lawyers/bulk-insert?custiId=${custiId}`, parsedResult.data)
+
+        // 1) Use the selectedCustiId instead of hardcoding
+        axios.post(
+          `http://23.23.199.217:8080/api/firm-lawyers/bulk-insert?custiId=${selectedCustiId}`,
+          parsedResult.data
+        )
           .then(response => {
             console.log("Response from POST:", response.data);
-            
-            // Show success message in snackbar
             setSnackbarMessage("CSV file uploaded successfully!");
             setSnackbarOpen(true);
-  
-            fetchConversations(); // Refresh the UI after successful upload
+
+            fetchConversations(); // Refresh the UI
           })
           .catch(error => {
             console.error("Error importing CSV:", error);
-  
-            // Show error message in snackbar
             setSnackbarMessage("Error uploading CSV file. Please try again.");
             setSnackbarOpen(true);
           });
@@ -173,7 +171,7 @@ export default function Dashboard() {
       reader.readAsText(file);
     }
   };
-  
+
 
   function getThreadsWithLatest() {
     const map = new Map();
@@ -492,14 +490,14 @@ export default function Dashboard() {
                         <DeleteIcon />
                       </IconButton> */}
 
-                        <IconButton
+                        {/* <IconButton
                           color="success"
                           title="Add Lawyer"
                           onClick={() => handleAddLawyerClick(customer)}
                         >
                           <PersonAddIcon />
-                        </IconButton>
-                        
+                        </IconButton> */}
+
 
 
                         <IconButton
@@ -509,8 +507,25 @@ export default function Dashboard() {
                         >
                           <VisibilityIcon />
                         </IconButton>
+                        <input
+                          type="file"
+                          onChange={(event) => importCsv(event, customer.custiId)}
+                          style={{ display: 'none' }}
+                          id={`file-upload-${customer.custiId}`}
+                        />
+                        <label htmlFor={`file-upload-${customer.custiId}`}>
+                          <Button
+                            variant="outlined"
+                            component="span"
+                            size="small"
+                            sx={{ padding: '4px 10px', fontSize: '0.75rem', minWidth: 'auto' }}
+                          >
+                            Choose File
+                          </Button>
+                        </label>
 
-                        <input type="file" onChange={importCsv} />
+
+
                       </TableCell>
                     </TableRow>
                   ))}
@@ -545,11 +560,9 @@ export default function Dashboard() {
               <TableHead>
                 <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
                   <TableCell sx={{ fontWeight: 600 }}>Client Phone Number</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Case Type</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Assigned Lawyer Name</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Assigned Lawyer Email</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+
+                  <TableCell sx={{ fontWeight: 600 }}> Lawyer Email</TableCell>
+
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -563,32 +576,10 @@ export default function Dashboard() {
                     }}
                   >
                     <TableCell>{thread.phoneNumber}</TableCell>
-                    <TableCell>{thread.caseType}</TableCell>
-                    <TableCell>{thread.assignedLawyerName ?? 'Not Assigned'}</TableCell>
+
                     <TableCell>{thread.email ?? 'N/A'}</TableCell>
-                    <TableCell>{thread.status}</TableCell>
-                    <TableCell>
-                      {/* your "View" / "Assign" / "Resolve" buttons here */}
-                      <Button onClick={() => handleOpenThread(thread.threadId)}>
-                        View
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setSelectedThread(thread.conversationThreadId);
-                          setAssignDialogOpen(true);
-                        }}
-                        disabled={Boolean(thread.assignedLawyerId)}
-                      >
-                        Assign
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={() => handleResolveClick(thread.conversationThreadId)}
-                      >
-                        Resolve
-                      </Button>
-                    </TableCell>
+
+
                   </TableRow>
                 ))}
               </TableBody>
@@ -821,9 +812,9 @@ export default function Dashboard() {
           ) : (
             selectedFirmLawyers.map((lawyer) => (
               <Box key={lawyer.lawyerId} sx={{ mb: 2 }}>
-                <Typography variant="body1">
+                {/* <Typography variant="body1">
                   <strong>Name:</strong> {lawyer.lawyerName}
-                </Typography>
+                </Typography> */}
                 <Typography variant="body2">
                   <strong>Email:</strong> {lawyer.lawyerMail}
                 </Typography>
@@ -891,19 +882,19 @@ export default function Dashboard() {
 
       {/* Snackbar for error messages */}
       <Snackbar
-  open={snackbarOpen}
-  autoHideDuration={6000}
-  onClose={handleCloseSnackbar}
-  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
->
-  <Alert 
-    onClose={handleCloseSnackbar} 
-    severity={snackbarMessage.includes("Error") ? "error" : "success"} 
-    sx={{ width: '100%' }}
-  >
-    {snackbarMessage}
-  </Alert>
-</Snackbar>
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbarMessage.includes("Error") ? "error" : "success"}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
 
 
 
