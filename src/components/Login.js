@@ -11,9 +11,11 @@ import {
   Box,
   useTheme,
   InputAdornment,
-  IconButton
+  IconButton,
+  Link,
+  Divider
 } from "@mui/material";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Visibility, VisibilityOff, Scale, LockOutlined, EmailOutlined } from "@mui/icons-material";
 import axios from "axios";
 
 export default function Login() {
@@ -41,78 +43,65 @@ export default function Login() {
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
 
-    // If user enters "Anusha", authenticate directly as ADMIN
     if (trimmedEmail === "Anusha" && trimmedPassword === "Anusha") {
       role = "ADMIN";
-
       localStorage.setItem("email", trimmedEmail);
       localStorage.setItem("role", role);
       localStorage.removeItem("firmId"); 
-
       navigate("/dashboardv2", {
         state: { inputValue: trimmedEmail, role },
       });
       return;
     }
 
-    // Ensure both fields are filled for non-"Anusha" cases
     if (!emailRegex.test(trimmedEmail) || trimmedPassword === "") {
       setError(true);
       setSnackbarOpen(true);
       return;
     }
 
-    // API Call to authenticate email and password
-    // ...
-try {
-  const loginResponse = await axios.post("http://23.23.199.217:8080/api/login", {
-    email: trimmedEmail,
-    password: trimmedPassword,
-  });
+    try {
+      const loginResponse = await axios.post("http://23.23.199.217:8080/api/login", {
+        email: trimmedEmail,
+        password: trimmedPassword,
+      });
 
-  // 1) Check if the server says we need a code
-  if (loginResponse.data === "PASSWORD_OK_NEED_CODE") {
-    // This means the password is correct, 
-    // but we have to prompt the user to enter the 4-digit code
-    navigate("/verifyCode", {
-      state: { email: trimmedEmail },
-    });
-    return;
-  }
+      if (loginResponse.data === "PASSWORD_OK_NEED_CODE") {
+        navigate("/verifyCode", {
+          state: { email: trimmedEmail },
+        });
+        return;
+      }
 
-  // 2) If we get a direct object with "firm", 
-  //    that means no 2-step is needed (maybe for an admin or "Anusha"?)
-  if (loginResponse.data && loginResponse.data.firm) {
-    const firmId = loginResponse.data.firm.custi_id;
-    const lawyerRole = loginResponse.data.lawyerRole;
-    const lawyerId = loginResponse.data.lawyerId;
+      if (loginResponse.data && loginResponse.data.firm) {
+        const firmId = loginResponse.data.firm.custi_id;
+        const lawyerRole = loginResponse.data.lawyerRole;
+        const lawyerId = loginResponse.data.lawyerId;
 
-    localStorage.setItem("email", trimmedEmail);
-    localStorage.setItem("role", lawyerRole);
-    localStorage.setItem("firmId", firmId);
-    localStorage.setItem("lawyerId", lawyerId);
+        localStorage.setItem("email", trimmedEmail);
+        localStorage.setItem("role", lawyerRole);
+        localStorage.setItem("firmId", firmId);
+        localStorage.setItem("lawyerId", lawyerId);
 
-    navigate("/FirmDashboard", {
-      state: {
-        inputValue: trimmedEmail,
-        role: lawyerRole,
-        firmId: firmId,
-        lawyerRole: lawyerRole,
-      },
-    });
-    return;
-  }
+        navigate("/FirmDashboard", {
+          state: {
+            inputValue: trimmedEmail,
+            role: lawyerRole,
+            firmId: firmId,
+            lawyerRole: lawyerRole,
+          },
+        });
+        return;
+      }
 
-  // 3) If no success or recognized response => show error
-  setError(true);
-  setSnackbarOpen(true);
+      setError(true);
+      setSnackbarOpen(true);
 
-} catch (error) {
-  console.error("Error calling login API:", error);
-  setError(true);
-  setSnackbarOpen(true);
-}
-
+    } catch (error) {
+      console.error("Error calling login API:", error);
+      setError(true);
+      setSnackbarOpen(true);
+    }
   };
 
   const handleKeyPress = (event) => {
@@ -122,10 +111,68 @@ try {
   };
 
   return (
-    <Container maxWidth="xs" sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Paper elevation={2} sx={{ width: '100%', p: { xs: 3, sm: 4 }, borderRadius: 3, backgroundColor: '#fff', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
-          <Typography variant="h4" sx={{ mb: 4, fontWeight: 500, textAlign: 'center', color: '#1976d2' }}>Login</Typography>
+    <Container 
+      maxWidth={false}
+      sx={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#f5f5f5',
+        backgroundImage: 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)'
+      }}
+    >
+      <Box
+        sx={{
+          width: '100%',
+          maxWidth: '440px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          px: 2
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            mb: 4
+          }}
+        >
+          <Scale sx={{ fontSize: 40, color: '#1976d2', mr: 2 }} />
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              color: '#1976d2',
+              letterSpacing: '0.5px'
+            }}
+          >
+            Law Pilot
+          </Typography>
+        </Box>
+
+        <Paper
+          elevation={3}
+          sx={{
+            width: '100%',
+            p: { xs: 3, sm: 4 },
+            borderRadius: 3,
+            backgroundColor: '#fff',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+          }}
+        >
+          <Typography
+            variant="h5"
+            sx={{
+              mb: 4,
+              fontWeight: 600,
+              textAlign: 'center',
+              color: '#2c3e50'
+            }}
+          >
+            Welcome Back
+          </Typography>
 
           <TextField
             fullWidth
@@ -139,7 +186,23 @@ try {
             onKeyPress={handleKeyPress}
             error={error}
             helperText={error ? "Enter a valid email or 'Anusha'" : ""}
-            sx={{ mb: 3, '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#fff' } }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <EmailOutlined sx={{ color: '#666' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              mb: 3,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                backgroundColor: '#fff',
+                '&:hover fieldset': {
+                  borderColor: '#1976d2',
+                },
+              }
+            }}
           />
 
           <TextField
@@ -156,6 +219,11 @@ try {
             error={error}
             helperText={error ? "Enter a valid password" : ""}
             InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockOutlined sx={{ color: '#666' }} />
+                </InputAdornment>
+              ),
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
@@ -169,22 +237,68 @@ try {
                 </InputAdornment>
               ),
             }}
-            sx={{ mb: 4, '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#fff' } }}
+            sx={{
+              mb: 4,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                backgroundColor: '#fff',
+                '&:hover fieldset': {
+                  borderColor: '#1976d2',
+                },
+              }
+            }}
           />
 
           <Button
             fullWidth
             variant="contained"
             onClick={handleLogin}
-            sx={{ py: 1.8, borderRadius: 2, textTransform: 'none', fontSize: '1.1rem', fontWeight: 500, backgroundColor: '#1976d2' }}
+            sx={{
+              py: 1.8,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontSize: '1.1rem',
+              fontWeight: 600,
+              backgroundColor: '#1976d2',
+              boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+              '&:hover': {
+                backgroundColor: '#1565c0',
+                boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)',
+              }
+            }}
           >
-            Login
+            Sign In
           </Button>
+
+      
         </Paper>
+
+        {/* <Typography
+          variant="body2"
+          sx={{
+            mt: 3,
+            color: '#666',
+            textAlign: 'center'
+          }}
+        >
+          © {new Date().getFullYear()} Law Pilot. All rights reserved.
+        </Typography> */}
       </Box>
 
-      <Snackbar open={snackbarOpen} autoHideDuration={4000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
-        <Alert severity="error" sx={{ width: '100%', backgroundColor: theme.palette.error.light, color: theme.palette.error.dark }}>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity="error"
+          sx={{
+            width: '100%',
+            backgroundColor: theme.palette.error.light,
+            color: theme.palette.error.dark
+          }}
+        >
           Invalid email or password. Please try again.
         </Alert>
       </Snackbar>
