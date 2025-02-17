@@ -32,7 +32,7 @@ import {
   Email as EmailIcon,
 } from '@mui/icons-material';
 import moment from 'moment';
-import { useLocation } from 'react-router-dom'; 
+import { useLocation } from 'react-router-dom';
 import Papa from 'papaparse';
 
 import 'moment-timezone';
@@ -50,6 +50,9 @@ export default function Dashboardv2() {
 
   const inputValue = localStorage.getItem("email") || "";
   const [selectedFile, setSelectedFile] = useState(null);
+
+  const [selectedFirm, setSelectedFirm] = useState(null);
+
 
   // State management
   const [customers, setCustomers] = useState([]);
@@ -136,7 +139,7 @@ export default function Dashboardv2() {
   const fetchLawyers = async () => {
     setIsLoading(true);
     try {
-     
+
       const response = await axios.get('http://23.23.199.217:8080/api/customers/1/lawyers');
       setLawyers(response.data);
       console.log("Lawyers", response.data);
@@ -425,28 +428,33 @@ export default function Dashboardv2() {
     setSnackbarOpen(false);
   };
 
- 
+
 
   const filteredMessages = messages.filter(msg => {
     const firmName = getFirmNameByTwilio(msg.toNumber);
     const lowerSearch = searchTerm.toLowerCase();
+
     return (
-      msg.fromNumber.toLowerCase().includes(lowerSearch) ||
-      msg.toNumber.toLowerCase().includes(lowerSearch) ||
-      firmName.toLowerCase().includes(lowerSearch)
+      (!selectedFirm || firmName === selectedFirm) &&  // Filter by selected firm
+      (msg.fromNumber.toLowerCase().includes(lowerSearch) ||
+        msg.toNumber.toLowerCase().includes(lowerSearch) ||
+        firmName.toLowerCase().includes(lowerSearch))
     );
   });
-  
+
   const filteredEmails = emails.filter(em => {
     const firmName = getFirmNameByCustId(em.custiId);
     const lowerSearch = searchTerm.toLowerCase();
+
     return (
-      em.clientPhoneNumber.toLowerCase().includes(lowerSearch) ||
-      (em.lawyerEmail && em.lawyerEmail.toLowerCase().includes(lowerSearch)) ||
-      firmName.toLowerCase().includes(lowerSearch)
+      (!selectedFirm || firmName === selectedFirm) &&  // Filter by selected firm
+      (em.clientPhoneNumber.toLowerCase().includes(lowerSearch) ||
+        (em.lawyerEmail && em.lawyerEmail.toLowerCase().includes(lowerSearch)) ||
+        firmName.toLowerCase().includes(lowerSearch))
     );
   });
-  
+
+
 
 
   return (
@@ -493,63 +501,25 @@ export default function Dashboardv2() {
                 <TableBody>
                   {filteredCustomers.map((customer) => (
                     <TableRow key={customer.custiId} hover>
-                      <TableCell>{customer.custName}</TableCell>
+                      <TableCell
+                        onClick={() => setSelectedFirm(customer.custName)}  // Set selected firm
+                        sx={{ cursor: 'pointer', color: '#1976d2', textDecoration: 'underline' }} // Make it look clickable
+                      >
+                        {customer.custName}
+                      </TableCell>
                       <TableCell>{customer.twilioNumber}</TableCell>
                       <TableCell>
-                        <IconButton
-                          color="primary"
-                          onClick={() => handleEditClick(customer)}
-                        >
+                        <IconButton color="primary" onClick={() => handleEditClick(customer)}>
                           <EditIcon />
                         </IconButton>
-                     
-                        {/* <IconButton
-                          color="error"
-                          onClick={() => handleDeleteClick(customer)}
-                        >
-                          <DeleteIcon />
-                        </IconButton> */}
-
-                        {/* Add lawyer */}
-                        {/* <IconButton
-                          color="success"
-                          title="Add Lawyer"
-                          onClick={() => handleAddLawyerClick(customer)}
-                        >
-                          <PersonAddIcon />
-                        </IconButton> */}
-
-                        {/* View Lawyers */}
-                        <IconButton
-                          color="info"
-                          onClick={() => handleViewLawyers(customer)}
-                          title="View Lawyers"
-                        >
+                        <IconButton color="info" onClick={() => handleViewLawyers(customer)}>
                           <VisibilityIcon />
                         </IconButton>
-
-                        {/* Bulk insert CSV specifically for this firm */}
-                        {/* <input
-                          type="file"
-                          onChange={(event) => importCsv(event, customer.custiId)}
-                          style={{ display: 'none' }}
-                          id={`file-upload-${customer.custiId}`}
-                        />
-                        <label htmlFor={`file-upload-${customer.custiId}`}>
-                          <Button
-                            variant="outlined"
-                            component="span"
-                            size="small"
-                            sx={{ padding: '4px 10px', fontSize: '0.75rem', minWidth: 'auto' }}
-                          >
-                            Choose File
-                          </Button>
-                        </label> */}
-
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
+
               </Table>
             </TableContainer>
           </Paper>
@@ -558,6 +528,20 @@ export default function Dashboardv2() {
 
       {/* --------------- TABS FOR MESSAGES/EMAILS --------------- */}
       <Box sx={{ mb: 4 }}>
+
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }}
+  onClick={() => setSelectedFirm(null)}
+>
+  <PersonIcon color="primary" />
+  <Typography variant="h5" sx={{
+    fontWeight: 600,
+    color: selectedFirm ? '#ff5722' : '#1976d2', // Change color if filtered
+    textShadow: '1px 1px 1px rgba(0,0,0,0.1)'
+  }}>
+    {selectedFirm ? ` ${selectedFirm}` : 'Law Firms'}
+  </Typography>
+</Box>
+
         <Box
           sx={{
             mb: 2,
@@ -575,8 +559,8 @@ export default function Dashboardv2() {
           </Tabs>
 
           {/* Right: Search bar */}
-         {/* Right: Search bar */}
-         <TextField
+          {/* Right: Search bar */}
+          <TextField
             variant="outlined"
             size="small"
             label="Search"
@@ -619,7 +603,7 @@ export default function Dashboardv2() {
               }
             }}
           />
-</Box>
+        </Box>
 
         {/* -- MESSAGES TABLE -- */}
         {selectedTab === 'messages' && (
@@ -670,22 +654,22 @@ export default function Dashboardv2() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-          {filteredEmails.map((em) => {
-            const firmName = getFirmNameByCustId(em.custiId);
-            return (
-              <TableRow key={em.id}>
-                <TableCell>{em.clientPhoneNumber}</TableCell>
-                <TableCell>{em.lawyerEmail || 'N/A'}</TableCell>
-                <TableCell>{firmName}</TableCell>
-                <TableCell>
-                  {moment(em.receivedAt)
-                    .tz("America/New_York")
-                    .format("YYYY-MM-DD HH:mm:ss")}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
+                  {filteredEmails.map((em) => {
+                    const firmName = getFirmNameByCustId(em.custiId);
+                    return (
+                      <TableRow key={em.id}>
+                        <TableCell>{em.clientPhoneNumber}</TableCell>
+                        <TableCell>{em.lawyerEmail || 'N/A'}</TableCell>
+                        <TableCell>{firmName}</TableCell>
+                        <TableCell>
+                          {moment(em.receivedAt)
+                            .tz("America/New_York")
+                            .format("YYYY-MM-DD HH:mm:ss")}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
               </Table>
             </TableContainer>
           </Paper>

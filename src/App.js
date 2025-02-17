@@ -5,6 +5,7 @@ import AppBar from './components/AppBar';
 import Login from './components/Login';
 import FirmDashboard from "./components/FirmDashboard";
 import Dashboardv2 from './components/Dashboardv2';
+import Dashboardv3 from './components/Dashboardv3';
 import VerifyCode from './components/VerifyCode';
 import { Box, Toolbar } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -39,9 +40,9 @@ function Layout() {
              <Route
               path="/dashboard"
               element={
-                <PrivateRoute>
+               
                   <Dashboard />
-                </PrivateRoute>
+              
               } />
             <Route
               path="/FirmDashboard"
@@ -51,11 +52,19 @@ function Layout() {
                 </PrivateRoute>
               }
             />
-            <Route
+            {/* <Route
               path="/dashboardv2"
               element={
                 <PrivateRoute>
                   <Dashboardv2 />
+                </PrivateRoute>
+              }
+            /> */}
+              <Route
+              path="/dashboardv3"
+              element={
+                <PrivateRoute>
+                  <Dashboardv3 />
                 </PrivateRoute>
               }
             />

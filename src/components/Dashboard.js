@@ -564,14 +564,14 @@ export default function Dashboard() {
                   >
                     <TableCell>{thread.phoneNumber}</TableCell>
                     <TableCell>{thread.caseType}</TableCell>
-                    <TableCell>{thread.assignedLawyerName ?? 'Not Assigned'}</TableCell>
+                    <TableCell>{thread.assignedLawyerName ?? 'N/A'}</TableCell>
                     <TableCell>{thread.email ?? 'N/A'}</TableCell>
                     <TableCell>{thread.status}</TableCell>
                     <TableCell>
                       {/* your "View" / "Assign" / "Resolve" buttons here */}
-                      <Button onClick={() => handleOpenThread(thread.threadId)}>
+                      {/* <Button onClick={() => handleOpenThread(thread.threadId)}>
                         View
-                      </Button>
+                      </Button> */}
                       <Button
                         onClick={() => {
                           setSelectedThread(thread.conversationThreadId);
@@ -687,7 +687,7 @@ export default function Dashboard() {
           <Autocomplete
             title="Twilio Number"
             disablePortal
-            options={['+17575688750', '+17575551111', '+17579608924']}
+            options={['+17575688750', '+17575551111', '+17579608924','+18145244095']}
             sx={{ width: 300 }}
             freeSolo={false}
             value={newCustomer.twilioNumber}

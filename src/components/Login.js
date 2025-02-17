@@ -48,7 +48,7 @@ export default function Login() {
       localStorage.setItem("email", trimmedEmail);
       localStorage.setItem("role", role);
       localStorage.removeItem("firmId"); 
-      navigate("/dashboardv2", {
+      navigate("/dashboardv3", {
         state: { inputValue: trimmedEmail, role },
       });
       return;
