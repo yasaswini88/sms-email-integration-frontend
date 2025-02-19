@@ -61,7 +61,7 @@ export default function Dashboardv3() {
     const [newCustomer, setNewCustomer] = useState({
         custMail: '',
         custName: '',
-        twilioNumber: '',
+        twilioNumbers: [],
         firmAddress: '',
         city: '',
         state: '',
@@ -356,16 +356,30 @@ export default function Dashboardv3() {
 
     const handleAddCustomer = async () => {
         try {
+
+            const combinedNumbers = newCustomer.twilioNumbers.join(',');
+
+            const payload = {
+                custMail: newCustomer.custMail,
+                custName: newCustomer.custName,
+                twilioNumber: combinedNumbers,
+                firmAddress: newCustomer.firmAddress,
+                city: newCustomer.city,
+                state: newCustomer.state,
+                zipCode: newCustomer.zipCode
+            };
+
+
             const createResponse = await axios.post(
                 'http://23.23.199.217:8080/api/customers',
-                newCustomer
+                payload
             );
             const createdFirm = createResponse.data;
 
             setNewCustomer({
                 custMail: '',
                 custName: '',
-                twilioNumber: '',
+                twilioNumbers: [],
                 firmAddress: '',
                 city: '',
                 state: '',
@@ -528,10 +542,23 @@ export default function Dashboardv3() {
 
 
     // -------------- Old helper for "messages" array --------------
+    // const getFirmNameByTwilio = (twilioNum) => {
+    //     const match = customers.find(c => c.twilioNumber === twilioNum);
+    //     return match ? match.custName : 'Unknown';
+    // };
+
     const getFirmNameByTwilio = (twilioNum) => {
-        const match = customers.find(c => c.twilioNumber === twilioNum);
-        return match ? match.custName : 'Unknown';
+        // We walk through each customer
+        for (let c of customers) {
+            // c.twilioNumber might be a comma separated list e.g. "+17579608924,+17575688750"
+            const allNums = c.twilioNumber.split(",").map(s => s.trim());
+            if (allNums.includes(twilioNum)) {
+                return c.custName;
+            }
+        }
+        return "Unknown";
     };
+
 
     // -------------- Old helper for "emails" array --------------
     const getFirmNameByCustId = (custiId) => {
@@ -643,6 +670,11 @@ export default function Dashboardv3() {
         ).length;
     }
 
+    const formatTwilioNumbers = (twilioNumber) => {
+        if (!twilioNumber) return [];
+        return twilioNumber.split(',').map(num => num.trim());
+    };
+
 
     // Render table rows for the new conversation approach
     const renderConversationRows = () => {
@@ -748,7 +780,25 @@ export default function Dashboardv3() {
                                             >
                                                 {customer.custName}
                                             </TableCell>
-                                            <TableCell>{customer.twilioNumber}</TableCell>
+                                            {/* <TableCell>{customer.twilioNumber}</TableCell> */}
+                                            <TableCell>
+                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                                    {formatTwilioNumbers(customer.twilioNumber).map((number, index) => (
+                                                        <Chip
+                                                            key={index}
+                                                            label={number}
+                                                            size="small"
+                                                            sx={{
+                                                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                                                color: theme.palette.primary.main,
+                                                                '&:hover': {
+                                                                    bgcolor: alpha(theme.palette.primary.main, 0.2)
+                                                                }
+                                                            }}
+                                                        />
+                                                    ))}
+                                                </Box>
+                                            </TableCell>
                                             <TableCell>
                                                 <IconButton color="primary" onClick={() => handleEditClick(customer)}>
                                                     <EditIcon />
@@ -1128,32 +1178,73 @@ export default function Dashboardv3() {
                                 <PhoneIcon sx={{ fontSize: 20, color: '#1976d2' }} />
                                 Contact Details
                             </Typography>
-                            <Autocomplete
-                                disablePortal
-                                options={['+17575688750', '+17575551111', '+17579608924']}
-                                freeSolo={false}
-                                value={newCustomer.twilioNumber}
-                                onChange={(_, selectedValue) => {
-                                    setNewCustomer(prev => ({
-                                        ...prev,
-                                        twilioNumber: selectedValue || ''
-                                    }));
-                                }}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Twilio Number"
-                                        name="twilioNumber"
+                            {/* Twilio Numbers Section */}
+
+                            <Box sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 2,
+                                mb: 3
+                            }}>
+                                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                                    Twilio Numbers
+                                </Typography>
+
+                                {newCustomer.twilioNumbers.map((num, index) => (
+                                    <Box
+                                        key={index}
                                         sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                '&:hover fieldset': {
-                                                    borderColor: '#1976d2',
-                                                }
-                                            }
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 2  // Consistent spacing
                                         }}
-                                    />
-                                )}
-                            />
+                                    >
+                                        <TextField
+                                            label={`Twilio Number #${index + 1}`}
+                                            value={num}
+                                            onChange={(e) => {
+                                                const updated = [...newCustomer.twilioNumbers];
+                                                updated[index] = e.target.value;
+                                                setNewCustomer((prev) => ({ ...prev, twilioNumbers: updated }));
+                                            }}
+                                            fullWidth
+                                        />
+                                        <Button
+                                            variant="outlined"
+                                            color="error"
+                                            sx={{ minWidth: '100px' }}  // Consistent button width
+                                            onClick={() => {
+                                                const updated = [...newCustomer.twilioNumbers];
+                                                updated.splice(index, 1);
+                                                setNewCustomer((prev) => ({ ...prev, twilioNumbers: updated }));
+                                            }}
+                                        >
+                                            Remove
+                                        </Button>
+                                    </Box>
+                                ))}
+
+                                <Button
+                                    variant="outlined"
+                                    color="primary"
+                                    startIcon={<AddIcon />}
+                                    sx={{
+                                        alignSelf: 'flex-start',
+                                        mt: 1
+                                    }}
+                                    onClick={() => {
+                                        setNewCustomer((prev) => ({
+                                            ...prev,
+                                            twilioNumbers: [...prev.twilioNumbers, '']
+                                        }));
+                                    }}
+                                >
+                                    Add Another Twilio Number
+                                </Button>
+                            </Box>
+
+
+
                         </Grid>
 
                         {/* File Upload Section */}
@@ -1176,6 +1267,10 @@ export default function Dashboardv3() {
                                     p: 3,
                                     textAlign: 'center',
                                     bgcolor: '#f8f9fa',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    gap: 2,
                                     '&:hover': {
                                         borderColor: '#1976d2',
                                         bgcolor: '#f1f5f9'
@@ -1198,6 +1293,7 @@ export default function Dashboardv3() {
                                             textTransform: 'none',
                                             color: '#64748b',
                                             borderColor: '#64748b',
+                                            minWidth: '150px',  // Consistent button width
                                             '&:hover': {
                                                 borderColor: '#1976d2',
                                                 color: '#1976d2'
@@ -1207,7 +1303,7 @@ export default function Dashboardv3() {
                                         Upload CSV File
                                     </Button>
                                 </label>
-                                <Typography variant="body2" sx={{ color: '#64748b', mt: 1 }}>
+                                <Typography variant="body2" sx={{ color: '#64748b' }}>
                                     Supported format: .CSV
                                 </Typography>
                             </Box>
@@ -1217,13 +1313,20 @@ export default function Dashboardv3() {
 
                 <Divider />
 
-                <DialogActions sx={{ p: 3, bgcolor: '#f8f9fa' }}>
+                <DialogActions sx={{
+                    p: 3,
+                    bgcolor: '#f8f9fa',
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: 2  // Add spacing between buttons
+                }}>
                     <Button
                         onClick={handleCloseDialog}
                         sx={{
                             color: '#64748b',
                             textTransform: 'none',
                             fontWeight: 500,
+                            minWidth: '100px',  // Ensure consistent button width
                             '&:hover': {
                                 bgcolor: '#f1f5f9'
                             }
@@ -1240,6 +1343,7 @@ export default function Dashboardv3() {
                             bgcolor: '#1976d2',
                             fontWeight: 500,
                             px: 3,
+                            minWidth: '150px',  // Ensure consistent button width
                             '&:hover': {
                                 bgcolor: '#1565c0'
                             }

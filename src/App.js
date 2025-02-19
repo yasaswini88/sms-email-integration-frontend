@@ -44,14 +44,14 @@ function Layout() {
                   <Dashboard />
               
               } />
-            <Route
+            {/* <Route
               path="/FirmDashboard"
               element={
                 <PrivateRoute>
                   <FirmDashboard />
                 </PrivateRoute>
               }
-            />
+            /> */}
             {/* <Route
               path="/dashboardv2"
               element={
@@ -70,6 +70,14 @@ function Layout() {
             />
             <Route path="/verifyCode" element={<VerifyCode />} />
             <Route path="/" element={<Login />} />
+            <Route
+              path="/FirmDashboard"
+              element={
+                
+                  <FirmDashboard />
+               
+              }
+            />
 
           </Routes>
         </Box>

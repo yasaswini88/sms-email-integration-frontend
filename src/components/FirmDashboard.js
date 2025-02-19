@@ -76,33 +76,36 @@ export default function FirmDashboard() {
                 header: true,
                 skipEmptyLines: true,
             });
-    
+
             // Get the logged-in user's firmId
             const userFirmId = localStorage.getItem("firmId") || "";
-    
+
             // Filter lawyers based on the logged-in user's firmId
             const filteredLawyers = parsedResult.data.filter(
                 (lawyer) => lawyer.firmId === userFirmId
             );
-    
+
             setLawyers(filteredLawyers);
         } catch (error) {
             console.error("Error fetching or parsing CSV:", error);
         }
     };
-    
+
 
 
     const loadData = async () => {
         try {
             // 1) Fetch CSV
-            const csvResponse = await fetch("/lawyers.csv");
-            const csvText = await csvResponse.text();
-            const parsedResult = Papa.parse(csvText, {
-                header: true,
-                skipEmptyLines: true,
-            });
-            setLawyers(parsedResult.data);
+            // const csvResponse = await fetch("/lawyers.csv");
+            // const csvText = await csvResponse.text();
+            // const parsedResult = Papa.parse(csvText, {
+            //     header: true,
+            //     skipEmptyLines: true,
+            // });
+            // setLawyers(parsedResult.data);
+
+            const lawyerResp = await axios.get(`http://23.23.199.217:8080/api/firm-lawyers/firm/${firmId}`);
+            setLawyers(lawyerResp.data);
 
             // 2) Fetch firm name
             const firmResp = await axios.get(
@@ -116,10 +119,12 @@ export default function FirmDashboard() {
             const allConversations = convResp.data;
 
             // 4) Filter by the CSV’s lawyer emails
-            const firmLawyerEmails = parsedResult.data.map((l) => l.lawyerMail);
-            const filtered = allConversations.filter((convo) =>
-                firmLawyerEmails.includes(convo.email)
-            );
+            // const firmLawyerEmails = parsedResult.data.map((l) => l.lawyerMail);
+            // const filtered = allConversations.filter((convo) =>
+            //     firmLawyerEmails.includes(convo.email)
+            // );
+
+
 
             // 5) Show only ACTIVE
             // const activeOnly = filtered.filter((convo) => convo.status === "ACTIVE");
@@ -139,11 +144,19 @@ export default function FirmDashboard() {
             // );
             // setConversations(latestConversations);
 
-            const grouped = filtered.reduce((acc, convo) => {
-                if (!acc[convo.conversationThreadId]) acc[convo.conversationThreadId] = [];
-                acc[convo.conversationThreadId].push(convo);
-                return acc;
-            }, {});
+            // const grouped = filtered.reduce((acc, convo) => {
+            //     if (!acc[convo.conversationThreadId]) acc[convo.conversationThreadId] = [];
+            //     acc[convo.conversationThreadId].push(convo);
+            //     return acc;
+            // }, {});
+
+
+   // 4) Group / set state with the full conversation list
+  const grouped = allConversations.reduce((acc, c) => {
+    if (!acc[c.conversationThreadId]) acc[c.conversationThreadId] = [];
+    acc[c.conversationThreadId].push(c);
+       return acc;
+  }, {});
 
             // Store all grouped conversations
             setGroupedConversations(grouped);
@@ -319,7 +332,7 @@ export default function FirmDashboard() {
     return (
         <Container maxWidth="xl" sx={{ py: 2 }}>
 
-            <FirmDashboardMetrics firmId={firmId} />
+            {/* <FirmDashboardMetrics firmId={firmId} /> */}
 
 
 
@@ -349,14 +362,14 @@ export default function FirmDashboard() {
                             <Table>
                                 <TableHead>
                                     <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
-                                        <TableCell sx={{ fontWeight: 600 }}>Lawyer Name</TableCell>
+                                        {/* <TableCell sx={{ fontWeight: 600 }}>Lawyer Name</TableCell> */}
                                         <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {lawyers.map((lawyer) => (
                                         <TableRow key={lawyer.lawyerId} hover>
-                                            <TableCell>{lawyer.lawyerName}</TableCell>
+                                            {/* <TableCell>{lawyer.lawyerName}</TableCell> */}
                                             <TableCell>{lawyer.lawyerMail}</TableCell>
                                         </TableRow>
                                     ))}
@@ -377,7 +390,7 @@ export default function FirmDashboard() {
                     indicatorColor="primary"
                 >
                     <Tab label="Active" value="ACTIVE" />
-                    <Tab label="Resolved" value="RESOLVED" />
+                    {/* <Tab label="Resolved" value="RESOLVED" /> */}
                 </Tabs>
             </Box>
             <Box sx={{ mb: 4 }}>
@@ -405,7 +418,7 @@ export default function FirmDashboard() {
                                 <TableHead>
                                     <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
                                         <TableCell sx={{ fontWeight: 600 }}>Client Phone Number</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Case Type</TableCell>
+                                        {/* <TableCell sx={{ fontWeight: 600 }}>Case Type</TableCell> */}
                                         <TableCell sx={{ fontWeight: 600 }}>Assigned Lawyer Name</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Assigned Lawyer Email</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
@@ -420,7 +433,7 @@ export default function FirmDashboard() {
                                         <TableRow key={convo.id} hover>
                                             <TableCell>{convo.phoneNumber}</TableCell>
 
-                                            <TableCell>
+                                            {/* <TableCell>
                                                 {convo.caseType}{" "}
                                                 <Button
                                                     variant="CONTAINED"
@@ -429,7 +442,7 @@ export default function FirmDashboard() {
                                                 >
                                                     Change
                                                 </Button>
-                                            </TableCell>
+                                            </TableCell> */}
 
                                             <TableCell>{convo.assignedLawyerName || "Not Assigned"}</TableCell>
                                             <TableCell>{convo.email || "N/A"}</TableCell>
@@ -522,8 +535,8 @@ export default function FirmDashboard() {
                                 <TableHead>
                                     <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
                                         <TableCell sx={{ fontWeight: 600 }}>Client Phone Number</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Case Type</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Assigned Lawyer Name</TableCell>
+                                        {/* <TableCell sx={{ fontWeight: 600 }}>Case Type</TableCell> */}
+                                        {/* <TableCell sx={{ fontWeight: 600 }}>Assigned Lawyer Name</TableCell> */}
                                         <TableCell sx={{ fontWeight: 600 }}>Assigned Lawyer Email</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
@@ -536,7 +549,7 @@ export default function FirmDashboard() {
                                             <TableCell>{convo.phoneNumber}</TableCell>
 
 
-                                            <TableCell>
+                                            {/* <TableCell>
                                                 {convo.caseType}{" "}
                                                 <Button
                                                     variant="text"
@@ -545,10 +558,10 @@ export default function FirmDashboard() {
                                                 >
                                                     Change
                                                 </Button>
-                                            </TableCell>
+                                            </TableCell> */}
 
                                             {/* 2) Assigned Lawyer Name */}
-                                            <TableCell>{convo.assignedLawyerName || "Not Assigned"}</TableCell>
+                                            {/* <TableCell>{convo.assignedLawyerName || "Not Assigned"}</TableCell> */}
 
                                             {/* 3) Assigned Lawyer Email */}
                                             <TableCell>{convo.email || "N/A"}</TableCell>
@@ -633,7 +646,7 @@ export default function FirmDashboard() {
                     >
                         {lawyers.map((lawyer) => (
                             <MenuItem key={lawyer.lawyerId} value={lawyer.lawyerId}>
-                                {lawyer.lawyerName}
+                            {lawyer.lawyerMail}
                             </MenuItem>
                         ))}
                     </Select>
